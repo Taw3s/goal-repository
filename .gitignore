@@ -1,0 +1,7 @@
+# Arquivos compactados (o conteúdo já está nas pastas)
+*.zip
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

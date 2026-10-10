@@ -1,0 +1,454 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Cardápio em Livro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,100,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: um palco de boteco (mesa verde) com bilhetes do cardápio vindo do fundo; ao abrir, eles viram um livro de papel. */
+:root {
+  --mesa: #123a2f;      /* verde de azulejo / mesa de boteco */
+  --mesa-2: #0b2721;
+  --papel: #f3e7c9;     /* papel de cardápio */
+  --papel-2: #e6d6ae;
+  --tinta: #2b1d14;
+  --tinta-2: #6b5643;
+  --tomate: #d5452a;
+  --mostarda: #e8a93a;
+  --txt: #f3e7c9;
+  --txt-2: #a9c2b6;
+  --display: 'Archivo', 'Arial Narrow', sans-serif;
+  --body: 'Archivo', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--mesa-2); color: var(--txt); font-family: var(--body); margin: 0; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--mostarda); outline-offset: 3px; }
+
+.topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 20px; font: 500 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--txt-2); }
+.topo b { color: var(--txt); font-weight: 500; }
+
+/* ── Palco ── */
+.palco { position: relative; height: clamp(600px, 86vh, 780px); overflow: hidden; margin-inline: 16px; border-radius: 6px;
+  background: radial-gradient(ellipse 70% 60% at 50% 45%, #1b5142 0%, var(--mesa) 45%, var(--mesa-2) 100%); }
+.palco::before { /* azulejo bem discreto */
+  content: ""; position: absolute; inset: 0; opacity: .07; pointer-events: none;
+  background-image: linear-gradient(45deg, var(--papel) 25%, transparent 25%, transparent 75%, var(--papel) 75%), linear-gradient(45deg, var(--papel) 25%, transparent 25%, transparent 75%, var(--papel) 75%);
+  background-size: 44px 44px; background-position: 0 0, 22px 22px;
+}
+.tunel { position: absolute; inset: 0; perspective: 900px; perspective-origin: 50% 46%; }
+.bil {
+  position: absolute; left: 50%; top: 46%; width: 150px; height: 196px; margin: -98px 0 0 -75px;
+  background: var(--papel); color: var(--tinta); border-radius: 3px; padding: 12px 12px 10px; display: flex; flex-direction: column;
+  box-shadow: 0 18px 30px -12px rgba(0,0,0,.55); will-change: transform, opacity; backface-visibility: hidden;
+}
+.bil small { font: 500 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--tomate); }
+.bil .prato { flex: 1; margin: 10px auto; width: 64%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--c, var(--mostarda)) 0 38%, #fff8e8 39% 58%, var(--papel-2) 59% 62%, #fffaf0 63%); }
+.bil b { font: 800 15px/1.05 var(--display); font-stretch: 75%; text-transform: uppercase; }
+.bil span { font: 500 11px var(--mono); color: var(--tinta-2); margin-top: 4px; }
+
+.capa-palco { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none; z-index: 2; transition: opacity .5s, transform .5s; }
+.capa-palco > div { pointer-events: auto; padding: 44px 40px; border-radius: 6px; background: radial-gradient(closest-side, rgba(11,39,33,.94) 55%, rgba(11,39,33,0)); }
+.capa-palco .eyebrow { font: 500 12px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mostarda); }
+.capa-palco h1 { font: 900 clamp(2.6rem, 8vw, 5.4rem)/.9 var(--display); font-stretch: 68%; text-transform: uppercase; margin: 12px 0 16px; text-wrap: balance; }
+.capa-palco p { color: var(--txt-2); margin: 0 auto 26px; max-width: 34ch; line-height: 1.5; }
+.abrir { background: var(--tomate); color: #fff; border: 0; border-radius: 99px; padding: 15px 30px; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 5px 0 #8f2a17; transition: transform .15s, box-shadow .15s; }
+.abrir:hover { transform: translateY(-2px); box-shadow: 0 7px 0 #8f2a17; }
+.abrir:active { transform: translateY(3px); box-shadow: 0 2px 0 #8f2a17; }
+.palco.aberto .capa-palco { opacity: 0; transform: scale(.94); pointer-events: none; }
+.palco.aberto .capa-palco > div { pointer-events: none; }
+
+/* ── Livro ── */
+.leitor { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 12px; opacity: 0; pointer-events: none; transition: opacity .45s; }
+.palco.livro-on .leitor { opacity: 1; pointer-events: auto; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 100%; }
+.chips button { background: rgba(243,231,201,.08); border: 1px solid rgba(243,231,201,.22); border-radius: 99px; padding: 7px 13px; font-size: 13px; font-weight: 600; cursor: pointer; min-height: 34px; }
+.chips button[aria-current="true"] { background: var(--papel); color: var(--tinta); border-color: var(--papel); }
+.livro { perspective: 2200px; }
+.folhas { position: relative; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.3,.1,.2,1); }
+.folha { position: absolute; top: 0; transform-origin: left center; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.35,.05,.2,1); }
+.folha.virada { transform: rotateY(-180deg); }
+.unica .folha.virada { opacity: 0; transition: transform .9s cubic-bezier(.35,.05,.2,1), opacity .25s .62s; }
+.pag { position: absolute; inset: 0; background: var(--papel); color: var(--tinta); backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden;
+  padding: 1.6em 1.6em 1.3em; display: flex; flex-direction: column; font-size: var(--fs); }
+.pag--verso { transform: rotateY(180deg); }
+.pag::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+.pag--frente::after { background: linear-gradient(90deg, rgba(43,29,20,.22), rgba(43,29,20,0) 9%); }
+.pag--verso::after { background: linear-gradient(270deg, rgba(43,29,20,.22), rgba(43,29,20,0) 9%); }
+.unica .pag--frente::after { background: linear-gradient(90deg, rgba(43,29,20,.12), rgba(43,29,20,0) 5%); }
+.folhas { box-shadow: 0 40px 60px -30px rgba(0,0,0,.7); }
+
+.pag h2 { font: 900 2.7em/.9 var(--display); font-stretch: 68%; text-transform: uppercase; margin: 0; color: var(--tomate); }
+.pag .sub { font: 500 .68em var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--tinta-2); margin: .5em 0 1.1em; }
+.itens { list-style: none; margin: 0; padding: 0; display: grid; gap: .95em; }
+.item .linha { display: flex; align-items: baseline; gap: .4em; }
+.item .nome { font: 700 1.08em var(--display); font-stretch: 85%; }
+.item .pontos { flex: 1; border-bottom: 1.5px dotted rgba(43,29,20,.45); transform: translateY(-.25em); min-width: 1em; }
+.item .preco { font: 500 .95em var(--mono); font-variant-numeric: tabular-nums; }
+.item .en { font-size: .8em; color: var(--tinta-2); font-style: italic; margin-top: .1em; }
+.item .tag { display: inline-block; font: 500 .6em var(--mono); letter-spacing: .08em; text-transform: uppercase; background: var(--mostarda); color: var(--tinta); padding: .15em .45em; border-radius: 3px; margin-left: .35em; vertical-align: .2em; }
+.rodape-pag { margin-top: auto; display: flex; justify-content: space-between; font: 500 .62em var(--mono); color: var(--tinta-2); letter-spacing: .06em; text-transform: uppercase; padding-top: .8em; border-top: 1px solid rgba(43,29,20,.15); }
+
+.pag--capa { background: var(--tomate); color: var(--papel); justify-content: center; align-items: flex-start; }
+.pag--capa .selo { width: 5.2em; aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--papel); display: grid; place-items: center; text-align: center; font: 500 .62em/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; margin-bottom: auto; }
+.pag--capa h2 { color: var(--papel); font-size: 4.2em; }
+.pag--capa p { font: 500 .78em var(--mono); letter-spacing: .12em; text-transform: uppercase; margin: 1em 0 auto; }
+.pag--capa .rodape-pag { color: var(--papel); border-color: rgba(243,231,201,.35); width: 100%; }
+.sumario { list-style: none; margin: .4em 0 0; padding: 0; display: grid; gap: .2em; }
+.sumario button { width: 100%; display: flex; align-items: baseline; gap: .4em; background: none; border: 0; padding: .45em 0; cursor: pointer; text-align: left; color: var(--tinta); font: 700 1.25em var(--display); font-stretch: 80%; text-transform: uppercase; }
+.sumario button:hover .n { color: var(--tomate); }
+.sumario .n { font: 500 .7em var(--mono); color: var(--tinta-2); }
+.pag--fim { background: var(--mesa); color: var(--papel); }
+.pag--fim h2 { color: var(--mostarda); }
+.pedir { display: grid; gap: .6em; margin-top: 1em; }
+.pedir a { display: flex; justify-content: space-between; align-items: center; padding: .85em 1em; border-radius: 6px; background: var(--papel); color: var(--tinta); text-decoration: none; font-weight: 700; }
+.pedir a span { font: 500 .7em var(--mono); color: var(--tinta-2); text-transform: uppercase; }
+.pag--fim .rodape-pag { color: var(--txt-2); border-color: rgba(243,231,201,.2); }
+.pag--branca { background: var(--papel-2); }
+
+.controles { display: flex; align-items: center; gap: 10px; }
+.controles button { background: none; border: 1px solid rgba(243,231,201,.3); border-radius: 99px; min-width: 44px; height: 44px; padding: 0 14px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.controles button:disabled { opacity: .3; cursor: default; }
+.controles .contador { font: 500 12px var(--mono); color: var(--txt-2); min-width: 7ch; text-align: center; }
+
+/* ── Abaixo do palco ── */
+.abaixo { max-width: 1040px; margin: 0 auto; padding: 36px 16px 64px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.abaixo h3 { font: 800 1.5rem var(--display); font-stretch: 80%; text-transform: uppercase; margin: 0 0 12px; color: var(--mostarda); }
+.abaixo p, .abaixo li { color: var(--txt-2); line-height: 1.6; }
+.abaixo ul { padding-left: 1.1em; margin: 0; }
+.abaixo li + li { margin-top: 6px; }
+.abaixo b { color: var(--txt); }
+.lista-btn { background: none; border: 1px solid rgba(243,231,201,.3); border-radius: 99px; padding: 10px 18px; cursor: pointer; font-weight: 600; margin-top: 14px; min-height: 44px; }
+.lista { grid-column: 1 / -1; background: var(--papel); color: var(--tinta); border-radius: 6px; padding: 28px clamp(16px, 4vw, 40px); columns: 2 300px; column-gap: 48px; font-size: 16px; }
+.lista section { break-inside: avoid; margin-bottom: 26px; }
+.lista h4 { font: 900 1.8rem/.9 var(--display); font-stretch: 68%; text-transform: uppercase; color: var(--tomate); margin: 0 0 12px; }
+@media (max-width: 760px) { .abaixo { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) {
+  .folha, .folhas, .capa-palco, .leitor, .bil { transition: none !important; }
+}
+</style>
+
+<div class="topo"><span><b>Tempero da Vila</b> · restaurante fictício para demonstração</span><span>Protótipo · cardápio interativo</span></div>
+
+<div class="palco" id="palco">
+  <div class="tunel" id="tunel" aria-hidden="true"></div>
+
+  <div class="capa-palco">
+    <div>
+      <span class="eyebrow">Cozinha brasileira de bairro</span>
+      <h1>Conheça nosso cardápio</h1>
+      <p>Mais de 20 pratos, do pastel de feira à feijoada de sábado. Abra e folheie.</p>
+      <button class="abrir" id="abrir" type="button">Abrir o cardápio</button>
+    </div>
+  </div>
+
+  <div class="leitor" id="leitor" aria-label="Cardápio em formato de livro">
+    <nav class="chips" id="chips" aria-label="Seções do cardápio"></nav>
+    <div class="livro" id="livro"><div class="folhas" id="folhas"></div></div>
+    <div class="controles">
+      <button type="button" id="ant" aria-label="Página anterior">←</button>
+      <span class="contador" id="contador" aria-live="polite"></span>
+      <button type="button" id="prox" aria-label="Próxima página">→</button>
+      <button type="button" id="fechar">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="abaixo">
+  <div>
+    <h3>Como funciona</h3>
+    <ul>
+      <li><b>Antes de abrir:</b> os pratos passam ao fundo, como bilhetes vindo do infinito.</li>
+      <li><b>Ao clicar:</b> todos se juntam numa pilha e viram um livro de papel.</li>
+      <li><b>Dentro do livro:</b> arraste, use as setas do teclado ou os botões de seção para pular direto.</li>
+    </ul>
+  </div>
+  <div>
+    <h3>Para o site do cliente</h3>
+    <p>Os pratos vêm de uma lista só no código. O dono troca nome e preço sem mexer no visual. A versão em lista abaixo é a mesma informação para quem prefere ler rápido.</p>
+    <button class="lista-btn" type="button" id="verLista" aria-expanded="false" aria-controls="lista">Ver cardápio em lista</button>
+  </div>
+  <div class="lista" id="lista" hidden></div>
+</div>
+
+<script>
+(function () {
+  var reduz = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- Dados do cardápio (restaurante fictício; preços de exemplo) ----------
+  var CARDAPIO = [
+    { id: 'entradas', nome: 'Entradas', en: 'Starters', cor: '#e8a93a', itens: [
+      ['Coxinha (6 un.)', 'Chicken croquettes', '9.00'],
+      ['Pastel de queijo', 'Fried cheese pastry', '6.50', 'vegetariano'],
+      ['Pão de queijo (10 un.)', 'Cheese bread', '8.00', 'vegetariano'],
+      ['Bolinho de mandioca', 'Cassava fritters with beef', '10.50'],
+      ['Mandioca frita', 'Fried cassava', '7.50', 'vegetariano']
+    ]},
+    { id: 'pratos', nome: 'Pratos', en: 'Mains', cor: '#9c3b1f', itens: [
+      ['Feijoada completa', 'Black bean & pork stew', '22.00', 'sábado'],
+      ['Picanha na chapa', 'Grilled top sirloin', '27.00'],
+      ['Moqueca de peixe', 'Fish & coconut stew', '24.50'],
+      ['Frango à parmegiana', 'Chicken parmigiana', '19.00']
+    ]},
+    { id: 'lanches', nome: 'Lanches', en: 'Sandwiches', cor: '#c9772f', itens: [
+      ['X-Tudo', 'The everything burger', '15.00'],
+      ['Bauru', 'Roast beef, cheese & tomato', '12.00'],
+      ['Misto quente', 'Grilled ham & cheese', '8.50'],
+      ['Beirute de frango', 'Chicken pita sandwich', '13.50']
+    ]},
+    { id: 'doces', nome: 'Sobremesas', en: 'Desserts', cor: '#5a2d1c', itens: [
+      ['Pudim de leite', 'Flan', '6.00'],
+      ['Brigadeiro (3 un.)', 'Chocolate fudge balls', '5.00'],
+      ['Mousse de maracujá', 'Passion fruit mousse', '6.50'],
+      ['Açaí na tigela', 'Açaí bowl', '11.00']
+    ]},
+    { id: 'bebidas', nome: 'Bebidas', en: 'Drinks', cor: '#3f7a4f', itens: [
+      ['Guaraná Antarctica', 'Brazilian soda', '3.00'],
+      ['Suco de maracujá', 'Passion fruit juice', '5.50'],
+      ['Caldo de cana', 'Sugarcane juice', '5.00'],
+      ['Café coado', 'Drip coffee', '2.50']
+    ]}
+  ];
+
+  // ---------- Páginas do livro ----------
+  function preco(p) { return '$' + p; }
+  function pagCategoria(c, n) {
+    return '<h2>' + c.nome + '</h2><div class="sub">' + c.en + '</div><ul class="itens">' +
+      c.itens.map(function (it) {
+        return '<li class="item"><div class="linha"><span class="nome">' + it[0] + (it[3] ? '<span class="tag">' + it[3] + '</span>' : '') +
+          '</span><span class="pontos"></span><span class="preco">' + preco(it[2]) + '</span></div><div class="en">' + it[1] + '</div></li>';
+      }).join('') + '</ul><div class="rodape-pag"><span>Tempero da Vila</span><span>p. ' + n + '</span></div>';
+  }
+  var paginas = [];   // { html, classe, rotulo, cat }
+  paginas.push({ classe: 'pag--capa', rotulo: 'Capa', html: '<div class="selo">Cozinha<br>de<br>bairro</div><h2>Tempero<br>da Vila</h2><p>Cardápio · Menu</p><div class="rodape-pag"><span>Restaurante fictício</span><span>Demonstração</span></div>' });
+  paginas.push({ classe: '', rotulo: 'Sumário', html: '<h2>Sumário</h2><div class="sub">Contents · toque para ir</div><ul class="sumario">' +
+    CARDAPIO.map(function (c, i) { return '<li><button type="button" data-ir="' + (i + 2) + '">' + c.nome + '<span class="pontos" style="flex:1;border-bottom:1.5px dotted rgba(43,29,20,.45)"></span><span class="n">p. ' + (i + 3) + '</span></button></li>'; }).join('') +
+    '</ul><div class="rodape-pag"><span>Preços em dólar · exemplo</span><span>p. 2</span></div>' });
+  CARDAPIO.forEach(function (c, i) { paginas.push({ classe: '', rotulo: c.nome, cat: c.id, html: pagCategoria(c, i + 3) }); });
+  paginas.push({ classe: 'pag--fim', rotulo: 'Pedir', html: '<h2>Peça agora</h2><div class="sub" style="color:var(--txt-2)">Order now</div><div class="pedir">' +
+    '<a href="#" onclick="return false">WhatsApp <span>exemplo</span></a><a href="#" onclick="return false">DoorDash <span>exemplo</span></a><a href="#" onclick="return false">Uber Eats <span>exemplo</span></a></div>' +
+    '<div class="rodape-pag"><span>Tempero da Vila</span><span>Fim</span></div>' });
+
+  // ---------- Livro: monta as folhas (duas páginas por folha no computador, uma no celular) ----------
+  var palco = document.getElementById('palco'), folhasEl = document.getElementById('folhas'), livroEl = document.getElementById('livro');
+  var modoDuplo = true, folhas = [], cur = 0, pw = 380, ph = 516;
+
+  function medir() {
+    var W = palco.clientWidth - 24, H = palco.clientHeight - 150;
+    modoDuplo = W >= 740;
+    pw = Math.floor(Math.min(410, modoDuplo ? W / 2 : W, H / 1.36));
+    ph = Math.round(pw * 1.36);
+  }
+  function montar() {
+    medir();
+    var pagsPorFolha = modoDuplo ? 2 : 1, total = Math.ceil(paginas.length / pagsPorFolha);
+    folhasEl.innerHTML = ''; folhas = [];
+    livroEl.classList.toggle('unica', !modoDuplo);
+    folhasEl.style.width = (modoDuplo ? pw * 2 : pw) + 'px';
+    folhasEl.style.height = ph + 'px';
+    folhasEl.style.setProperty('--fs', (pw / 400 * 15).toFixed(2) + 'px');
+    for (var f = 0; f < total; f++) {
+      var frente = paginas[f * pagsPorFolha], verso = modoDuplo ? paginas[f * 2 + 1] : null;
+      var el = document.createElement('div');
+      el.className = 'folha';
+      el.style.width = pw + 'px'; el.style.height = ph + 'px'; el.style.left = (modoDuplo ? pw : 0) + 'px';
+      el.innerHTML = '<div class="pag pag--frente ' + frente.classe + '">' + frente.html + '</div>' +
+        '<div class="pag pag--verso ' + (verso ? verso.classe : 'pag--branca') + '">' + (verso ? verso.html : '') + '</div>';
+      folhasEl.appendChild(el);
+      folhas.push(el);
+    }
+    folhasEl.querySelectorAll('[data-ir]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); irPara(+b.dataset.ir); }); });
+    cur = Math.min(cur, folhas.length);
+    aplicar(true);
+  }
+  function aplicar(semAnim) {
+    folhas.forEach(function (el, i) {
+      if (semAnim) el.style.transition = 'none';
+      el.classList.toggle('virada', i < cur);
+      el.style.zIndex = i < cur ? i + 1 : folhas.length - i + 1;
+      if (semAnim) { void el.offsetWidth; el.style.transition = ''; }
+    });
+    // livro fechado fica centralizado: capa (início) ou contracapa (fim)
+    var dx = 0;
+    if (modoDuplo) { if (cur === 0) dx = -pw / 2; else if (cur === folhas.length) dx = pw / 2; }
+    folhasEl.style.transform = 'translateX(' + dx + 'px)';
+    atualizarUI();
+  }
+  function paginasVisiveis() {
+    if (!modoDuplo) return [cur < paginas.length ? cur : paginas.length - 1];
+    var v = [];
+    if (cur > 0) v.push(2 * cur - 1);
+    if (cur < folhas.length) v.push(2 * cur);
+    return v.filter(function (p) { return p < paginas.length; });
+  }
+  function virar(dir) {
+    var novo = cur + dir;
+    if (novo < 0 || novo > (modoDuplo ? folhas.length : folhas.length - 1)) return;
+    var i = dir > 0 ? cur : cur - 1;
+    folhas[i].style.zIndex = 200;            // a folha em movimento passa por cima
+    cur = novo;
+    folhas[i].classList.toggle('virada', dir > 0);
+    var dx = 0;
+    if (modoDuplo) { if (cur === 0) dx = -pw / 2; else if (cur === folhas.length) dx = pw / 2; }
+    folhasEl.style.transform = 'translateX(' + dx + 'px)';
+    setTimeout(function () { folhas.forEach(function (el, k) { el.style.zIndex = k < cur ? k + 1 : folhas.length - k + 1; }); if (folhas[i]) folhas[i].style.zIndex = dir > 0 ? i + 1 : folhas.length - i + 1; }, reduz ? 0 : 900);
+    atualizarUI();
+  }
+  var fila = null;
+  function irPara(p) { // pula até a página p folheando uma a uma, rápido
+    var alvo = modoDuplo ? (p % 2 === 0 ? p / 2 : (p + 1) / 2) : p;
+    clearInterval(fila);
+    if (reduz) { cur = alvo; aplicar(true); return; }
+    fila = setInterval(function () {
+      if (cur === alvo) { clearInterval(fila); return; }
+      virar(alvo > cur ? 1 : -1);
+    }, 110);
+  }
+  var chipsEl = document.getElementById('chips');
+  CARDAPIO.forEach(function (c, i) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = c.nome; b.dataset.p = i + 2;
+    b.addEventListener('click', function () { irPara(i + 2); });
+    chipsEl.appendChild(b);
+  });
+  function atualizarUI() {
+    var vis = paginasVisiveis();
+    chipsEl.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-current', String(vis.indexOf(+b.dataset.p) > -1)); });
+    document.getElementById('ant').disabled = cur === 0;
+    document.getElementById('prox').disabled = modoDuplo ? cur === folhas.length : cur === folhas.length - 1;
+    document.getElementById('contador').textContent = vis.map(function (p) { return paginas[p].rotulo; }).join(' · ');
+  }
+  document.getElementById('ant').addEventListener('click', function () { clearInterval(fila); virar(-1); });
+  document.getElementById('prox').addEventListener('click', function () { clearInterval(fila); virar(1); });
+  folhasEl.addEventListener('click', function (e) { // tocar na metade direita avança, na esquerda volta
+    if (e.target.closest('a, button')) return;
+    var r = folhasEl.getBoundingClientRect();
+    virar(e.clientX > r.left + r.width / 2 ? 1 : -1);
+  });
+  var x0 = null;
+  folhasEl.addEventListener('pointerdown', function (e) { x0 = e.clientX; });
+  folhasEl.addEventListener('pointerup', function (e) {
+    if (x0 === null) return; var d = e.clientX - x0; x0 = null;
+    if (Math.abs(d) > 40) { e.preventDefault(); virar(d < 0 ? 1 : -1); folhasEl.dataset.arrastou = '1'; setTimeout(function () { delete folhasEl.dataset.arrastou; }, 50); }
+  });
+  folhasEl.addEventListener('click', function (e) { if (folhasEl.dataset.arrastou) e.stopImmediatePropagation(); }, true);
+
+  // ---------- Túnel: bilhetes vindo do fundo ----------
+  var tunel = document.getElementById('tunel'), bilhetes = [], todos = [];
+  CARDAPIO.forEach(function (c) { c.itens.forEach(function (it) { todos.push({ cat: c.nome, cor: c.cor, nome: it[0], preco: it[2] }); }); });
+  var seed = 7; function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+  var ZMIN = -2800, ZMAX = 320;
+  function posicionar(b, z) {
+    var ang = rnd() * Math.PI * 2, r = 260 + rnd() * 520;
+    b.x = Math.cos(ang) * r * 1.25; b.y = Math.sin(ang) * r * .8; b.z = z; b.rot = (rnd() - .5) * 26;
+  }
+  todos.concat(todos.slice(0, 8)).forEach(function (d, i, arr) {
+    var el = document.createElement('div');
+    el.className = 'bil';
+    el.style.setProperty('--c', d.cor);
+    el.innerHTML = '<small>' + d.cat + '</small><div class="prato"></div><b>' + d.nome + '</b><span>' + preco(d.preco) + '</span>';
+    tunel.appendChild(el);
+    var b = { el: el };
+    posicionar(b, ZMIN + (ZMAX - ZMIN) * (i / arr.length));
+    bilhetes.push(b);
+  });
+  function desenharTunel() {
+    bilhetes.forEach(function (b) {
+      var op = Math.min(1, (b.z - ZMIN) / 700) * Math.min(1, (ZMAX - b.z) / 260);
+      b.el.style.opacity = Math.max(0, op).toFixed(3);
+      b.el.style.transform = 'translate3d(' + b.x.toFixed(1) + 'px,' + b.y.toFixed(1) + 'px,' + b.z.toFixed(1) + 'px) rotate(' + b.rot.toFixed(1) + 'deg)';
+    });
+  }
+  var rodando = !reduz, ult = 0;
+  function loop(t) {
+    if (!rodando) return;
+    var dt = Math.min(50, t - (ult || t)); ult = t;
+    bilhetes.forEach(function (b) { b.z += dt * 0.11; if (b.z > ZMAX) posicionar(b, ZMIN); });
+    desenharTunel();
+    requestAnimationFrame(loop);
+  }
+  desenharTunel();
+  if (rodando) requestAnimationFrame(loop);
+  palco.addEventListener('pointermove', function (e) { // leve paralaxe com o mouse
+    if (e.pointerType !== 'mouse' || reduz) return;
+    var r = palco.getBoundingClientRect();
+    tunel.style.perspectiveOrigin = (50 + ((e.clientX - r.left) / r.width - .5) * 14) + '% ' + (46 + ((e.clientY - r.top) / r.height - .5) * 10) + '%';
+  });
+
+  // ---------- Abrir: os bilhetes se juntam e viram o livro ----------
+  var aberto = false;
+  function abrir() {
+    if (aberto) return; aberto = true;
+    palco.classList.add('aberto');
+    if (reduz) { bilhetes.forEach(function (b) { b.el.style.opacity = 0; }); palco.classList.add('livro-on'); cur = 0; aplicar(true); virar(1); return; }
+    rodando = false;
+    bilhetes.forEach(function (b, i) {
+      var atraso = (Math.hypot(b.x, b.y) / 900) * .35 + (b.z < -1600 ? .1 : 0);
+      b.el.style.transition = 'transform .85s cubic-bezier(.6,0,.2,1) ' + atraso.toFixed(2) + 's, opacity .35s ' + (atraso + .7).toFixed(2) + 's';
+      b.el.style.opacity = 1;
+      b.el.style.transform = 'translate3d(' + ((rnd() - .5) * 10).toFixed(1) + 'px,' + ((rnd() - .5) * 10).toFixed(1) + 'px,' + (-i * 1.2) + 'px) rotate(' + ((rnd() - .5) * 14).toFixed(1) + 'deg)';
+      setTimeout(function () { b.el.style.opacity = 0; }, (atraso + .75) * 1000);
+    });
+    cur = 0; aplicar(true);
+    folhasEl.style.transition = 'none';
+    folhasEl.style.transform = 'translateX(' + (modoDuplo ? -pw / 2 : 0) + 'px) scale(.42)';
+    setTimeout(function () {
+      palco.classList.add('livro-on');
+      void folhasEl.offsetWidth;
+      folhasEl.style.transition = 'transform .7s cubic-bezier(.2,.8,.2,1)';
+      folhasEl.style.transform = 'translateX(' + (modoDuplo ? -pw / 2 : 0) + 'px) scale(1)';
+      setTimeout(function () { folhasEl.style.transition = ''; virar(1); }, 900);
+    }, 1150);
+  }
+  function fechar() {
+    if (!aberto) return;
+    clearInterval(fila);
+    cur = 0; aplicar(false);
+    setTimeout(function () {
+      palco.classList.remove('livro-on');
+      setTimeout(function () {
+        palco.classList.remove('aberto');
+        bilhetes.forEach(function (b, i) {
+          b.el.style.transition = reduz ? 'none' : 'transform .9s cubic-bezier(.2,.8,.2,1) ' + (i * .012).toFixed(3) + 's, opacity .5s';
+        });
+        desenharTunel();
+        setTimeout(function () { bilhetes.forEach(function (b) { b.el.style.transition = 'none'; }); aberto = false; if (!reduz) { rodando = true; ult = 0; requestAnimationFrame(loop); } }, 1200);
+      }, 300);
+    }, reduz ? 0 : 700);
+  }
+  document.getElementById('abrir').addEventListener('click', abrir);
+  document.getElementById('fechar').addEventListener('click', fechar);
+  document.addEventListener('keydown', function (e) {
+    if (!aberto) return;
+    if (e.key === 'ArrowRight') { clearInterval(fila); virar(1); }
+    else if (e.key === 'ArrowLeft') { clearInterval(fila); virar(-1); }
+    else if (e.key === 'Escape') fechar();
+  });
+  var larg = palco.clientWidth, tm;
+  window.addEventListener('resize', function () {
+    if (palco.clientWidth === larg) return; larg = palco.clientWidth;
+    clearTimeout(tm); tm = setTimeout(function () { var p = paginasVisiveis()[0] || 0; montar(); if (aberto) { cur = modoDuplo ? Math.ceil(p / 2) : p; aplicar(true); } }, 150);
+  });
+
+  // ---------- Versão em lista ----------
+  var lista = document.getElementById('lista');
+  lista.innerHTML = CARDAPIO.map(function (c) {
+    return '<section><h4>' + c.nome + '</h4><ul class="itens">' + c.itens.map(function (it) {
+      return '<li class="item"><div class="linha"><span class="nome">' + it[0] + (it[3] ? '<span class="tag">' + it[3] + '</span>' : '') + '</span><span class="pontos"></span><span class="preco">' + preco(it[2]) + '</span></div><div class="en">' + it[1] + '</div></li>';
+    }).join('') + '</ul></section>';
+  }).join('');
+  document.getElementById('verLista').addEventListener('click', function () {
+    lista.hidden = !lista.hidden;
+    this.setAttribute('aria-expanded', String(!lista.hidden));
+    this.textContent = lista.hidden ? 'Ver cardápio em lista' : 'Esconder lista';
+  });
+
+  montar();
+  // permite abrir direto pelo link ...#aberto (útil para mostrar ao cliente)
+  if (location.hash === '#aberto') setTimeout(abrir, 400);
+})();
+</script>
+
+</body></html>
